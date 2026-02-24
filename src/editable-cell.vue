@@ -83,11 +83,18 @@ function coerceValue(raw: string): any {
   return raw;
 }
 
+function valuesEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (a == null && b == null) return true;
+  // Compare by string representation to avoid type mismatch (e.g. 5 vs "5")
+  return String(a) === String(b);
+}
+
 function commitEdit() {
   if (!editing.value) return;
   editing.value = false;
   const coerced = coerceValue(editValue.value);
-  if (coerced !== props.value) {
+  if (!valuesEqual(coerced, props.value)) {
     emit('edit', { field: props.field, value: coerced });
   }
 }
@@ -108,6 +115,7 @@ function cancelEdit() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--theme--foreground, #171717);
 }
 
 .viewport-cell:not(.is-readonly):hover {
@@ -142,10 +150,9 @@ function cancelEdit() {
 }
 
 .cell-display {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .saving-dot {

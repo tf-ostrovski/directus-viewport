@@ -272,6 +272,7 @@ defineExpose({ flushEdits });
   width: 100%;
   border-collapse: collapse;
   table-layout: auto;
+  color: var(--theme--foreground, #171717);
 }
 
 .viewport-table thead {
