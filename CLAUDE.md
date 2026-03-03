@@ -1,18 +1,20 @@
-# CLAUDE.md — directus-viewport
+# CLAUDE.md — er-table
 
-Rozszerzenie layoutu dla Directus. Zastępuje standardowy widok listy tabelą z możliwością
-edycji komórek inline (podwójne kliknięcie), auto-zapisem i szufladą szczegółów.
+Bundle rozszerzeń Directus. Zawiera dwa rozszerzenia:
+
+1. **Viewport** (layout) — tabela z edycją komórek inline (dblclick), auto-zapisem i szufladą szczegółów
+2. **PWA** (hook) — Progressive Web App: manifest, service worker, offline support
 
 ## Repo
 
 ```
-git@github.com:tf-ostrovski/directus-viewport.git
+git@github.com:tf-ostrovski/er-table.git
 ```
 
 ## Technologie
 
 - **Directus Extensions SDK** (`@directus/extensions-sdk`)
-- **Vue 3** (Composition API, `<script setup>`)
+- **Vue 3** (Composition API, `<script setup>`) — w layout viewport
 - **TypeScript**
 - **Build:** `directus-extension build` (oparty na Vite)
 
@@ -20,16 +22,22 @@ git@github.com:tf-ostrovski/directus-viewport.git
 
 ```
 src/
-├── index.ts          ← entry point: defineLayout(), setup(), stan globalny
-├── layout.vue        ← główny komponent: tabela, paginacja, zarządzanie edycją
-├── editable-cell.vue ← pojedyncza komórka tabeli z trybem edycji (dblclick)
-├── detail-drawer.vue ← szuflada szczegółów (teleport do body, edycja przez API)
-├── options.vue       ← panel opcji layoutu (spacing, auto-save, delay)
-├── actions.vue       ← pasek akcji (licznik rekordów, przycisk "Save Changes")
-└── types.ts          ← LayoutOptions, LayoutQuery
+├── viewport/             ← LAYOUT: tabela z inline edycją
+│   ├── index.ts          ← entry point: defineLayout(), setup(), stan globalny
+│   ├── layout.vue        ← główny komponent: tabela, paginacja, zarządzanie edycją
+│   ├── editable-cell.vue ← pojedyncza komórka tabeli z trybem edycji (dblclick)
+│   ├── detail-drawer.vue ← szuflada szczegółów (teleport do body, edycja przez API)
+│   ├── options.vue       ← panel opcji layoutu (spacing, auto-save, delay)
+│   ├── actions.vue       ← pasek akcji (licznik rekordów, przycisk "Save Changes")
+│   └── types.ts          ← LayoutOptions, LayoutQuery
+└── pwa/                  ← HOOK: PWA support
+    ├── index.ts          ← defineHook(): embed manifest link + rejestracja SW routes
+    ├── manifest.ts       ← generowanie Web App Manifest z ustawień Directus
+    └── service-worker.ts ← skrypt service worker (cache strategies)
 
 dist/
-└── index.js          ← zbudowany bundle (montowany do Directus)
+├── app.js                ← frontend bundle (layout viewport)
+└── api.js                ← backend bundle (hook PWA)
 ```
 
 ## Komendy
@@ -39,7 +47,7 @@ npm run build   # jednorazowy build
 npm run dev     # watch mode — przebudowuje dist/ przy każdej zmianie src/
 ```
 
-## Jak działa edycja
+## Jak działa edycja (viewport)
 
 1. Użytkownik dwukrotnie klika komórkę → `editable-cell.vue` wchodzi w tryb edycji
 2. Po `blur` / `Enter` → wartość trafia do `pendingEdits` (Map: `pk → {field: value}`)
@@ -47,13 +55,20 @@ npm run dev     # watch mode — przebudowuje dist/ przy każdej zmianie src/
 4. Jeśli `autoSave=false` → przycisk "Save Changes" w `actions.vue` → `flushEdits()`
 5. Komórki z `isDirty=true` mają żółte tło (`color-mix` z `--theme--warning`)
 
+## Jak działa PWA
+
+1. Hook rejestruje 3 endpointy Express: `/manifest.json`, `/sw.js`, `/pwa/register-sw.js`
+2. Embed `<link rel="manifest">` i `<script>` w `<head>` Directus
+3. Service worker: cache-first dla statycznych assetów, network-first dla nawigacji, network-only dla API
+4. Manifest pobiera ustawienia projektu (nazwa, logo, kolor) z `directus_settings`
+
 ## Deployment
 
-Push do `main` w repo `sys` → deploy.sh klonuje ten repo na VPS, buduje `npm run build`, i montuje jako bind mount do kontenera Directus. Szczegoly w `../sys/scripts/deploy.sh`.
+Push do `main` → GitHub Actions → SSH na VPS → `deploy.sh` klonuje ten repo, buduje, montuje jako bind mount do kontenera Directus. Szczegóły w `../sys/scripts/deploy.sh`.
 
-## Lokalne srodowisko dev
+## Lokalne środowisko dev
 
-Stack Docker zyje w `../sys/` (multi-root workspace `appka.code-workspace`).
+Stack Docker żyje w `../sys/` (multi-root workspace `appka.code-workspace`).
 
 ```bash
 # Start stacka (z katalogu sys)
@@ -68,7 +83,7 @@ http://localhost:8055
 
 Rozszerzenie jest montowane jako bind mount w `docker-compose.dev.yml`:
 ```yaml
-../directus-viewport:/directus/extensions/directus-viewport
+../er-table:/directus/extensions/er-table
 ```
 `EXTENSIONS_AUTO_RELOAD=true` — Directus wykrywa zmiany w `dist/` automatycznie (kilka sekund).
 
@@ -79,10 +94,10 @@ Rozszerzenie jest montowane jako bind mount w `docker-compose.dev.yml`:
 | **URL** | https://directus.ostrowski.group |
 | **Kontener** | `supabase-directus` |
 | **SSH** | `ssh root@147.93.59.125` (klucz SSH) |
-| **Extensions na VPS** | `/opt/sys/extensions/directus-viewport/` (bind mount) |
+| **Extensions na VPS** | `/opt/sys/extensions/er-table/` (bind mount) |
 
 ```bash
-# Sprawdz logi Directus na VPS
+# Sprawdź logi Directus na VPS
 ssh root@147.93.59.125 "docker logs supabase-directus --tail 50"
 ```
 

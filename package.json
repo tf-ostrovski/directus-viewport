@@ -1,11 +1,26 @@
 {
-  "name": "directus-extension-viewport",
+  "name": "directus-extension-er-table",
   "version": "1.0.0",
   "type": "module",
   "directus:extension": {
-    "type": "layout",
-    "path": "dist/index.js",
-    "source": "src/index.ts",
+    "type": "bundle",
+    "partial": true,
+    "path": {
+      "app": "dist/app.js",
+      "api": "dist/api.js"
+    },
+    "entries": [
+      {
+        "type": "layout",
+        "name": "viewport",
+        "source": "src/viewport/index.ts"
+      },
+      {
+        "type": "hook",
+        "name": "pwa",
+        "source": "src/pwa/index.ts"
+      }
+    ],
     "host": "^11.0.0"
   },
   "scripts": {
@@ -14,7 +29,6 @@
   },
   "devDependencies": {
     "@directus/extensions-sdk": "^12.0.0",
-    "docx": "^9.6.0",
     "typescript": "^5.7.0",
     "vue": "^3.5.0"
   }
