@@ -38,6 +38,17 @@
         @change="autoSaveDelay = Number(($event.target as HTMLInputElement).value)"
       />
     </div>
+
+    <div class="options__group">
+      <div class="options__label">Live Refresh</div>
+      <label class="options__toggle">
+        <input type="checkbox" v-model="liveRefresh" class="options__toggle-input" />
+        <span class="options__toggle-track">
+          <span class="options__toggle-thumb"></span>
+        </span>
+        <span class="options__toggle-text">{{ liveRefresh ? 'Enabled' : 'Disabled' }}</span>
+      </label>
+    </div>
   </div>
 </template>
 
@@ -61,17 +72,22 @@ const spacingOptions = [
 
 const spacing = computed({
   get: () => props.layoutOptions?.spacing || 'cozy',
-  set: (val) => emit('update:layoutOptions', { ...props.layoutOptions, spacing: val, autoSave: autoSave.value, autoSaveDelay: autoSaveDelay.value }),
+  set: (val) => emit('update:layoutOptions', { ...props.layoutOptions, spacing: val, autoSave: autoSave.value, autoSaveDelay: autoSaveDelay.value, liveRefresh: liveRefresh.value }),
 });
 
 const autoSave = computed({
   get: () => props.layoutOptions?.autoSave !== false,
-  set: (val) => emit('update:layoutOptions', { ...props.layoutOptions, spacing: spacing.value, autoSave: val, autoSaveDelay: autoSaveDelay.value }),
+  set: (val) => emit('update:layoutOptions', { ...props.layoutOptions, spacing: spacing.value, autoSave: val, autoSaveDelay: autoSaveDelay.value, liveRefresh: liveRefresh.value }),
 });
 
 const autoSaveDelay = computed({
   get: () => props.layoutOptions?.autoSaveDelay || 1000,
-  set: (val) => emit('update:layoutOptions', { ...props.layoutOptions, spacing: spacing.value, autoSave: autoSave.value, autoSaveDelay: val }),
+  set: (val) => emit('update:layoutOptions', { ...props.layoutOptions, spacing: spacing.value, autoSave: autoSave.value, autoSaveDelay: val, liveRefresh: liveRefresh.value }),
+});
+
+const liveRefresh = computed({
+  get: () => props.layoutOptions?.liveRefresh !== false,
+  set: (val) => emit('update:layoutOptions', { ...props.layoutOptions, spacing: spacing.value, autoSave: autoSave.value, autoSaveDelay: autoSaveDelay.value, liveRefresh: val }),
 });
 </script>
 

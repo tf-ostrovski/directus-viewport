@@ -1,5 +1,6 @@
 import { defineLayout, useSync, useCollection, useItems } from '@directus/extensions-sdk';
 import { ref, computed, watch, toRefs } from 'vue';
+import { useSubscription } from './use-subscription';
 import LayoutComponent from './layout.vue';
 import OptionsComponent from './options.vue';
 import ActionsComponent from './actions.vue';
@@ -78,6 +79,17 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
       filter,
     });
 
+    const liveRefresh = computed<boolean>({
+      get: () => layoutOptions.value?.liveRefresh !== false,
+      set: (val) => { layoutOptions.value = { ...layoutOptions.value, liveRefresh: val }; },
+    });
+
+    const { connected: wsConnected } = useSubscription({
+      collection,
+      onEvent: getItems,
+      enabled: liveRefresh,
+    });
+
     function toggleSort(field: string) {
       const current = sort.value;
       if (current.length > 0 && current[0] === field) {
@@ -120,6 +132,8 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
       spacing,
       autoSave,
       autoSaveDelay,
+      liveRefresh,
+      wsConnected,
       selection,
       toggleSort,
       selectAll,

@@ -1,5 +1,8 @@
 <template>
   <div class="actions">
+    <span v-if="liveRefresh" class="actions__ws-status" :class="{ 'actions__ws-status--connected': wsConnected }">
+      {{ wsConnected ? 'Live' : 'Connecting...' }}
+    </span>
     <span class="actions__count" v-if="itemCount !== null && totalCount !== null">
       {{ rangeStart }}-{{ rangeEnd }} of {{ totalCount }}
     </span>
@@ -23,6 +26,8 @@ const props = defineProps<{
   limit: number;
   autoSave: boolean;
   hasPending: boolean;
+  liveRefresh: boolean;
+  wsConnected: boolean;
 }>();
 
 defineEmits<{
@@ -67,5 +72,28 @@ const rangeEnd = computed(() => {
 
 .actions__save-btn:hover {
   opacity: 0.85;
+}
+
+/* ── WebSocket status ── */
+
+.actions__ws-status {
+  font-size: 12px;
+  color: var(--theme--foreground-subdued, #999);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.actions__ws-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--theme--foreground-subdued, #999);
+  transition: background 0.3s;
+}
+
+.actions__ws-status--connected::before {
+  background: var(--theme--success, #2ecda7);
 }
 </style>
