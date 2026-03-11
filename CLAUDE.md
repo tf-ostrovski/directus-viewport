@@ -93,13 +93,13 @@ Rozszerzenie jest montowane jako bind mount w `docker-compose.dev.yml`:
 | | |
 |---|---|
 | **URL** | https://directus.ostrowski.group |
-| **Kontener** | `supabase-directus` |
+| **Kontener** | `directus` |
 | **SSH** | `ssh root@147.93.59.125` (klucz SSH) |
 | **Extensions na VPS** | `/opt/sys/extensions/er-table/` (bind mount) |
 
 ```bash
 # Sprawdź logi Directus na VPS
-ssh root@147.93.59.125 "docker logs supabase-directus --tail 50"
+ssh root@147.93.59.125 "docker logs directus --tail 50"
 ```
 
 ## Znane ograniczenia / TODO
