@@ -23,13 +23,13 @@ git@github.com:tf-ostrovski/er-table.git
 ```
 src/
 ├── viewport/             ← LAYOUT: tabela z inline edycją
-│   ├── index.ts          ← entry point: defineLayout(), setup(), stan globalny
+│   ├── index.ts          ← entry point: defineLayout(), setup(), stan reaktywny (pendingEdits, hasPending, savingKeys)
 │   ├── layout.vue        ← główny komponent: tabela, paginacja, zarządzanie edycją
 │   ├── editable-cell.vue ← pojedyncza komórka tabeli z trybem edycji (dblclick)
 │   ├── detail-drawer.vue ← szuflada szczegółów (teleport do body, edycja przez API)
 │   ├── options.vue       ← panel opcji layoutu (spacing, auto-save, delay)
 │   ├── actions.vue       ← pasek akcji (licznik rekordów, przycisk "Save Changes")
-│   ├── types.ts          ← LayoutOptions, LayoutQuery
+│   ├── types.ts          ← LayoutOptions (spacing, autoSave, autoSaveDelay, liveRefresh), LayoutQuery (fields, sort, limit, page)
 │   └── use-subscription.ts ← composable: Directus real-time subscription
 └── pwa/                  ← HOOK: PWA support
     ├── index.ts          ← defineHook(): embed manifest link + rejestracja SW routes
@@ -52,9 +52,33 @@ npm run dev     # watch mode — przebudowuje dist/ przy każdej zmianie src/
 
 1. Użytkownik dwukrotnie klika komórkę → `editable-cell.vue` wchodzi w tryb edycji
 2. Po `blur` / `Enter` → wartość trafia do `pendingEdits` (Map: `pk → {field: value}`)
-3. Jeśli `autoSave=true` → timer (`autoSaveDelay` ms) → `flushEdits()` → `PATCH /items/{collection}/{pk}`
-4. Jeśli `autoSave=false` → przycisk "Save Changes" w `actions.vue` → `flushEdits()`
-5. Komórki z `isDirty=true` mają żółte tło (`color-mix` z `--theme--warning`)
+3. `hasPending` (computed: `pendingEdits.size > 0`) steruje widocznością przycisku Save
+4. Jeśli `autoSave=true` → timer (`autoSaveDelay` ms) → `flushEdits()` → `PATCH /items/{collection}/{pk}`
+5. Jeśli `autoSave=false` → przycisk "Save Changes" w `actions.vue` (`v-if="!autoSave && hasPending"`) → `flushEdits()`
+6. Komórki z `isDirty=true` mają żółte tło, komórki z `isSaving=true` mają 50% opacity + spinner
+7. `savingKeys` (Set) śledzi klucze główne rekordów aktualnie zapisywanych
+
+## Stan reaktywny (index.ts → setup)
+
+| Zmienna | Typ | Opis |
+|---------|-----|------|
+| `pendingEdits` | `ref(Map<PK, {field: value}>)` | Edycje czekające na zapis |
+| `savingKeys` | `ref(Set<PK>)` | Rekordy aktualnie zapisywane |
+| `hasPending` | `computed<boolean>` | `pendingEdits.size > 0` — steruje przyciskiem Save |
+| `selection` | `Ref<string[]>` | Zaznaczone rekordy (Directus useSync) |
+
+Sortowanie i zaznaczanie wszystkich — zaimplementowane lokalnie w `layout.vue` (emit-y `update:sort`, `update:selection`).
+
+## useSubscription (composable)
+
+WebSocket subscription do Directus real-time. Parametry:
+- `collection` — kolekcja do subskrypcji
+- `onEvent` — callback na zdarzenie (domyślnie: `getItems` — odświeżenie tabeli)
+- `enabled` — `liveRefresh` computed (wyłączane z options)
+- `debounceMs` — domyślnie 300ms
+- `getToken` — pobiera JWT z Directus auth store
+
+Reconnect: exponential backoff (max 30s). Zwraca `{ connected: Ref<boolean> }`.
 
 ## Jak działa PWA
 

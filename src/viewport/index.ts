@@ -96,30 +96,9 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
       },
     });
 
-    function toggleSort(field: string) {
-      const current = sort.value;
-      if (current.length > 0 && current[0] === field) {
-        sort.value = [`-${field}`];
-      } else if (current.length > 0 && current[0] === `-${field}`) {
-        sort.value = [];
-      } else {
-        sort.value = [field];
-      }
-    }
-
-    function selectAll() {
-      if (!items.value || !primaryKeyField.value) return;
-      const pk = primaryKeyField.value.field;
-      const allKeys = items.value.map((item: any) => item[pk]);
-      if (selection.value && selection.value.length === allKeys.length) {
-        selection.value = [];
-      } else {
-        selection.value = allKeys;
-      }
-    }
-
     const pendingEdits = ref(new Map<string | number, Record<string, any>>());
     const savingKeys = ref(new Set<string | number>());
+    const hasPending = computed(() => pendingEdits.value.size > 0);
 
     return {
       collection,
@@ -141,8 +120,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
       liveRefresh,
       wsConnected,
       selection,
-      toggleSort,
-      selectAll,
+      hasPending,
       refresh: getItems,
       pendingEdits,
       savingKeys,
