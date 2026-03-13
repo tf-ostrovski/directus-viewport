@@ -3,6 +3,7 @@ name: Deploy er-table Extension Bundle
 on:
   push:
     branches: [main]
+  workflow_dispatch: {}
 
 jobs:
   deploy:
@@ -14,16 +15,16 @@ jobs:
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh_key
 
       - name: Trigger full deploy
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_wait_seconds: 30
-          command: |
+        run: |
+          for i in 1 2 3; do
             ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
               -i ~/.ssh_key \
               root@${{ secrets.VPS_HOST }} \
-              /opt/sys/scripts/deploy.sh
+              /opt/sys/scripts/deploy.sh && exit 0
+            echo "Attempt $i failed, retrying in 30s..."
+            sleep 30
+          done
+          exit 1
 
       - name: Cleanup
         if: always()
